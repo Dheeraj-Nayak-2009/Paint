@@ -6,37 +6,14 @@
   <title>Drawing Canvas 🎨</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700&display=swap');
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: "Poppins", sans-serif;
-    }
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: #141414;
-      color: #ffffff;
-      overflow: auto;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Poppins", sans-serif; }
+    body { display: flex; flex-direction: column; align-items: center; background: #141414; color: #ffffff; overflow: auto; }
     @media only screen and (max-width: 400px) {
-      #canvas {
-        height: 200px;
-      }
-      .bottombar {
-        overflow-x: auto;
-        gap: 1px;
-      }
-      body {
-        overflow: auto;
-      }
-      .shortcutkeys {
-        width: 100%;
-      }
-      #fill, #reset, #undo, #redo, #save, #eraser, #smudge {
-        font-size: 10px;
-      }
+      #canvas { height: 200px; }
+      .bottombar { overflow-x: auto; gap: 1px; }
+      body { overflow: auto; }
+      .shortcutkeys{ width: 100%; }
+      #fill, #reset, #undo, #redo, #save, #eraser, #smudge{ font-size: 10px; }
     }
     #canvas {
       border: 2px solid #1fa44b;
@@ -46,55 +23,26 @@
       background: #232323;
       border-radius: 10px;
       touch-action: none;
-      display: block;
     }
     .topbar, .bottombar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
-      margin-top: 10px;
-      overflow-x: auto;
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; width: 100%; margin-top: 10px; overflow-x: auto;
     }
     #favcolor {
-      border: none;
-      height: 30px;
-      width: 30px;
-      border-radius: 50%;
-      cursor: pointer;
+      border: none; height: 30px; width: 30px; border-radius: 50%; cursor: pointer;
     }
-    #favcolor::-webkit-color-swatch-wrapper {
-      padding: 0;
-      border-radius: 50%;
-    }
-    #favcolor::-webkit-color-swatch {
-      border: none;
-      border-radius: 50%;
-    }
+    #favcolor::-webkit-color-swatch-wrapper { padding: 0; border-radius: 50%; }
+    #favcolor::-webkit-color-swatch { border: none; border-radius: 50%; }
     #fill, #reset, #undo, #redo, #save, #eraser, #smudge {
-      background-color: #555;
-      color: #fff;
-      border: none;
-      padding: 5px 10px;
-      cursor: pointer;
-      border-radius: 5px;
+      background-color: #555; color: #fff; border: none; padding: 5px 10px;
+      cursor: pointer; border-radius: 5px;
     }
     #fill:hover, #reset:hover, #undo:hover, #redo:hover, #save:hover, #eraser:hover, #smudge:hover {
       background: #003d3d;
     }
-    #fill.active, #eraser.active, #smudge.active {
-      background-color: #31a44b;
-    }
-    label {
-      user-select: none;
-    }
-    .brush {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
+    #fill.active, #eraser.active, #smudge.active { background-color: #31a44b; }
+    label { user-select: none; }
+    .brush { display: flex; align-items: center; justify-content: center; gap: 8px; }
   </style>
 </head>
 <body>
@@ -112,9 +60,11 @@
   <canvas id="canvas"></canvas>
 
   <div class="shortcutkeys" id="infobox"
-       style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-       background: black; padding: 30px; border-radius: 20px; display: none; width: 60%; text-align: justify;">
-    <button onclick="hideInfo()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: white; font-size: 20px; cursor: pointer;">&times;</button>
+    style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+           background: black; padding: 30px; border-radius: 20px; display: none; width: 60%; text-align: justify;">
+    <button onclick="hideInfo()"
+      style="position: absolute; top: 10px; right: 10px; background: none; border: none;
+             color: white; font-size: 20px; cursor: pointer;">&times;</button>
     <h3>Shortcut Keys on Keyboard:</h3>
     <p>
       1 - 9 : Select Brush Size <br>
@@ -128,7 +78,7 @@
   </div>
 
   <div class="bottombar">
-    <button id="q" onclick="toggleInfo()">❔</button>
+    <button id="q" onclick="toggleInfo()">❓</button>
     <button id="undo" onclick="undo()">Undo</button>
     <button id="reset" onclick="resetCanvas()">Reset</button>
     <button id="fill" onclick="toggleFillMode()">Fill</button>
@@ -141,55 +91,39 @@
   <script>
     let canvas, ctx;
     let painting = false;
-    let fillMode = false, eraserMode = false, smudgeMode = false;
-    let lastX, lastY, startX, startY;
-    let history = [], redoStack = [];
+    let fillMode = false;
+    let eraserMode = false;
+    let smudgeMode = false;
+    let lastX, lastY;
+    let history = [];
+    let redoStack = [];
+    let startX, startY;
 
     window.addEventListener("load", () => {
       canvas = document.getElementById("canvas");
       ctx = canvas.getContext("2d");
+      const thickness = document.getElementById("range");
 
-      function resizeCanvas(preserve = true) {
-        // Save old drawing
-        let savedImage = null;
-        if (preserve) {
-          savedImage = new Image();
-          savedImage.src = canvas.toDataURL();
-        }
+      // ✅ Resize + keep drawings on resize
+      function resizeCanvas() {
+        const temp = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-        // Adjust canvas resolution to CSS
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
 
-        // Restore drawing
-        if (preserve && savedImage) {
-          savedImage.onload = () => {
-            ctx.drawImage(savedImage, 0, 0, canvas.width, canvas.height);
-          };
-        }
+        const tmpCanvas = document.createElement("canvas");
+        tmpCanvas.width = temp.width;
+        tmpCanvas.height = temp.height;
+        tmpCanvas.getContext("2d").putImageData(temp, 0, 0);
+
+        ctx.drawImage(tmpCanvas, 0, 0, canvas.width, canvas.height);
+        saveState();
       }
 
-      resizeCanvas(false);
+      window.addEventListener("resize", resizeCanvas);
 
-      // Restore from localStorage
-      const savedData = localStorage.getItem("drawingCanvas");
-      if (savedData) {
-        const img = new Image();
-        img.src = savedData;
-        img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      }
-
-      window.addEventListener("resize", () => resizeCanvas(true));
-
-      function saveState() {
-        history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-        redoStack = [];
-        saveToLocal();
-      }
-
-      function saveToLocal() {
-        localStorage.setItem("drawingCanvas", canvas.toDataURL());
-      }
+      // First sizing
+      resizeCanvas();
 
       function startPosition(e) {
         e.preventDefault();
@@ -198,7 +132,8 @@
           const { x, y } = getCursorPosition(e);
           lastX = startX = x;
           lastY = startY = y;
-          draw(e);
+          if (smudgeMode) { smudge(e); }
+          else { draw(e); }
         }
       }
 
@@ -223,11 +158,9 @@
 
       function draw(e) {
         if (!painting || fillMode || smudgeMode) return;
-
         const { x, y } = getCursorPosition(e);
         ctx.lineWidth = document.getElementById("range").value;
         ctx.lineCap = "round";
-
         if (eraserMode) {
           ctx.globalCompositeOperation = "destination-out";
           ctx.strokeStyle = "rgba(0,0,0,1)";
@@ -235,21 +168,71 @@
           ctx.globalCompositeOperation = "source-over";
           ctx.strokeStyle = document.getElementById("favcolor").value;
         }
-
         ctx.beginPath();
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(x, y);
+        if (e.shiftKey) {
+          ctx.putImageData(history[history.length - 1], 0, 0);
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(x, y);
+        } else {
+          ctx.moveTo(lastX, lastY);
+          ctx.lineTo(x, y);
+        }
         ctx.stroke();
-
         lastX = x;
         lastY = y;
+      }
+
+      function smudge(e) {
+        if (!painting || !smudgeMode) return;
+        const { x, y } = getCursorPosition(e);
+        const brushSize = parseInt(thickness.value);
+        const smudgeRadius = Math.max(brushSize / 3, 3);
+        for (let i = 0; i < smudgeRadius; i++) {
+          const offsetX = (Math.random() - 0.5) * brushSize;
+          const offsetY = (Math.random() - 0.5) * brushSize;
+          const smudgeX = lastX + offsetX;
+          const smudgeY = lastY + offsetY;
+          const imageData = ctx.getImageData(smudgeX, smudgeY, smudgeRadius, smudgeRadius);
+          ctx.putImageData(imageData, x + offsetX, y + offsetY);
+        }
+        lastX = x;
+        lastY = y;
+      }
+
+      function handleFill(e) {
+        if (fillMode) { fillArea(e); saveState(); }
+        else { startPosition(e); }
+      }
+
+      canvas.addEventListener("mousedown", handleFill);
+      canvas.addEventListener("mouseup", finishPosition);
+      canvas.addEventListener("mousemove", (e) => smudgeMode ? smudge(e) : draw(e));
+      canvas.addEventListener("touchstart", (e) => handleFill(e));
+      canvas.addEventListener("touchend", finishPosition);
+      canvas.addEventListener("touchmove", (e) => smudgeMode ? smudge(e) : draw(e));
+
+      window.addEventListener("keydown", (e) => {
+        if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
+        if ((e.ctrlKey && e.key === 'y') || (e.ctrlKey && e.shiftKey && e.key === 'Z')) { e.preventDefault(); redo(); }
+        if (e.key === 'f') toggleFillMode();
+        if (e.key === 'e') toggleEraserMode();
+        if (e.key === 's') toggleSmudgeMode();
+        if (e.key === 'd') resetCanvas();
+        const brushSizes = { '1': 3, '2': 5, '3': 7, '4': 10, '5': 12, '6': 15, '7': 20, '8': 25, '9': 30 };
+        if (brushSizes[e.key]) thickness.value = brushSizes[e.key];
+        const colors = { 'r': '#ff0000', 'g': '#00ff00', 'b': '#0000ff', 'w': '#ffffff', 'k': '#000000', 'y': '#ffff00', 'm': '#ff00ff', 'c': '#00ffff' };
+        if (colors[e.key]) document.getElementById("favcolor").value = colors[e.key];
+      });
+
+      function saveState() {
+        history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        redoStack = [];
       }
 
       function undo() {
         if (history.length > 1) {
           redoStack.push(history.pop());
           ctx.putImageData(history[history.length - 1], 0, 0);
-          saveToLocal();
         }
       }
 
@@ -258,14 +241,31 @@
           const imageData = redoStack.pop();
           history.push(imageData);
           ctx.putImageData(imageData, 0, 0);
-          saveToLocal();
         }
       }
 
-      function resetCanvas() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        saveState();
+      function toggleFillMode() {
+        fillMode = !fillMode; eraserMode = false; smudgeMode = false;
+        document.getElementById("fill").classList.toggle("active", fillMode);
+        document.getElementById("eraser").classList.remove("active");
+        document.getElementById("smudge").classList.remove("active");
       }
+
+      function toggleEraserMode() {
+        eraserMode = !eraserMode; fillMode = false; smudgeMode = false;
+        document.getElementById("eraser").classList.toggle("active", eraserMode);
+        document.getElementById("fill").classList.remove("active");
+        document.getElementById("smudge").classList.remove("active");
+      }
+
+      function toggleSmudgeMode() {
+        smudgeMode = !smudgeMode; fillMode = false; eraserMode = false;
+        document.getElementById("smudge").classList.toggle("active", smudgeMode);
+        document.getElementById("fill").classList.remove("active");
+        document.getElementById("eraser").classList.remove("active");
+      }
+
+      function resetCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); saveState(); }
 
       function saveCanvas() {
         const link = document.createElement("a");
@@ -274,34 +274,78 @@
         link.click();
       }
 
-      // Attach listeners
-      canvas.addEventListener("mousedown", startPosition);
-      canvas.addEventListener("mouseup", finishPosition);
-      canvas.addEventListener("mousemove", draw);
+      function fillArea(e) {
+        let x, y;
+        if (e.type.startsWith("touch")) {
+          const touch = e.touches[0];
+          x = Math.floor(touch.clientX - canvas.getBoundingClientRect().left);
+          y = Math.floor(touch.clientY - canvas.getBoundingClientRect().top);
+        } else {
+          x = Math.floor(e.offsetX);
+          y = Math.floor(e.offsetY);
+        }
+        const fillColor = hexToRgbArray(document.getElementById("favcolor").value);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const targetColor = getColorAtPixel(imageData, x, y);
+        if (colorsMatch(fillColor, targetColor)) return;
+        scanlineFill(imageData, x, y, targetColor, fillColor);
+        ctx.putImageData(imageData, 0, 0);
+      }
 
-      canvas.addEventListener("touchstart", startPosition);
-      canvas.addEventListener("touchend", finishPosition);
-      canvas.addEventListener("touchmove", draw);
+      function hexToRgbArray(hex) {
+        const bigint = parseInt(hex.slice(1), 16);
+        return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255, 255];
+      }
+
+      function scanlineFill(imageData, x, y, targetColor, fillColor) {
+        const { data, width, height } = imageData;
+        const stack = [[x, y]];
+        while (stack.length) {
+          const [sx, sy] = stack.pop();
+          let startX = sx;
+          while (startX >= 0 && colorsMatch(getColorAtPixel(imageData, startX, sy), targetColor)) startX--;
+          startX++;
+          let reachLeft = false, reachRight = false;
+          for (let i = startX; i < width && colorsMatch(getColorAtPixel(imageData, i, sy), targetColor); i++) {
+            setColorAtPixel(data, (sy * width + i) * 4, fillColor);
+            if (sy > 0 && colorsMatch(getColorAtPixel(imageData, i, sy - 1), targetColor)) {
+              if (!reachLeft) { stack.push([i, sy - 1]); reachLeft = true; }
+            } else reachLeft = false;
+            if (sy < height - 1 && colorsMatch(getColorAtPixel(imageData, i, sy + 1), targetColor)) {
+              if (!reachRight) { stack.push([i, sy + 1]); reachRight = true; }
+            } else reachRight = false;
+          }
+        }
+      }
+
+      function getColorAtPixel(imageData, x, y) {
+        const idx = (y * imageData.width + x) * 4;
+        return imageData.data.slice(idx, idx + 4);
+      }
+
+      function setColorAtPixel(data, idx, color) {
+        data[idx] = color[0]; data[idx + 1] = color[1];
+        data[idx + 2] = color[2]; data[idx + 3] = color[3];
+      }
+
+      function colorsMatch(a, b) {
+        return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
+      }
 
       window.undo = undo;
       window.redo = redo;
       window.resetCanvas = resetCanvas;
+      window.toggleFillMode = toggleFillMode;
+      window.toggleEraserMode = toggleEraserMode;
+      window.toggleSmudgeMode = toggleSmudgeMode;
       window.saveCanvas = saveCanvas;
-
-      saveState();
     });
 
     function toggleInfo() {
       const infobox = document.getElementById("infobox");
       infobox.style.display = infobox.style.display === "none" ? "block" : "none";
     }
-    function hideInfo() {
-      document.getElementById("infobox").style.display = "none";
-    }
-
-    function toggleFillMode() {}
-    function toggleEraserMode() { eraserMode = !eraserMode; }
-    function toggleSmudgeMode() { smudgeMode = !smudgeMode; }
+    function hideInfo() { document.getElementById("infobox").style.display = "none"; }
   </script>
 </body>
 </html>
