@@ -99,6 +99,22 @@
     let redoStack = [];
     let startX, startY;
 
+    // ✅ localStorage save & load
+    function saveToLocal() {
+      localStorage.setItem("canvasData", canvas.toDataURL());
+    }
+    function loadFromLocal() {
+      const dataURL = localStorage.getItem("canvasData");
+      if (dataURL) {
+        const img = new Image();
+        img.src = dataURL;
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          saveState(); // keep in undo stack too
+        };
+      }
+    }
+
     window.addEventListener("load", () => {
       canvas = document.getElementById("canvas");
       ctx = canvas.getContext("2d");
@@ -106,24 +122,24 @@
 
       // ✅ Resize + keep drawings on resize
       function resizeCanvas() {
-        const temp = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
+        const dataURL = canvas.toDataURL(); // save drawing as image
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
 
-        const tmpCanvas = document.createElement("canvas");
-        tmpCanvas.width = temp.width;
-        tmpCanvas.height = temp.height;
-        tmpCanvas.getContext("2d").putImageData(temp, 0, 0);
-
-        ctx.drawImage(tmpCanvas, 0, 0, canvas.width, canvas.height);
-        saveState();
+        const img = new Image();
+        img.src = dataURL;
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          saveState();
+          saveToLocal();
+        };
       }
-
       window.addEventListener("resize", resizeCanvas);
 
       // First sizing
-      resizeCanvas();
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      loadFromLocal(); // ✅ restore saved drawing if exists
 
       function startPosition(e) {
         e.preventDefault();
@@ -139,7 +155,7 @@
 
       function finishPosition() {
         painting = false;
-        if (!fillMode) saveState();
+        if (!fillMode) { saveState(); saveToLocal(); }
         ctx.beginPath();
       }
 
@@ -200,7 +216,7 @@
       }
 
       function handleFill(e) {
-        if (fillMode) { fillArea(e); saveState(); }
+        if (fillMode) { fillArea(e); saveState(); saveToLocal(); }
         else { startPosition(e); }
       }
 
@@ -233,6 +249,7 @@
         if (history.length > 1) {
           redoStack.push(history.pop());
           ctx.putImageData(history[history.length - 1], 0, 0);
+          saveToLocal();
         }
       }
 
@@ -241,6 +258,7 @@
           const imageData = redoStack.pop();
           history.push(imageData);
           ctx.putImageData(imageData, 0, 0);
+          saveToLocal();
         }
       }
 
@@ -265,7 +283,7 @@
         document.getElementById("eraser").classList.remove("active");
       }
 
-      function resetCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); saveState(); }
+      function resetCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); saveState(); saveToLocal(); }
 
       function saveCanvas() {
         const link = document.createElement("a");
@@ -316,6 +334,7 @@
             } else reachRight = false;
           }
         }
+        saveToLocal();
       }
 
       function getColorAtPixel(imageData, x, y) {
